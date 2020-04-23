@@ -1,0 +1,32 @@
+{
+  "name": "@iaigz/core-answer",
+  "version": "1.0.0",
+  "description": "iai core Answer implementation",
+  "main": "Answer.js",
+  "files": [
+    "Answer.js",
+    "ApiAnswer.js"
+  ],
+  "scripts": {
+    "test": "node test/answer.js && standard --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iaigz/core-answer.git"
+  },
+  "keywords": [
+    "iai",
+    "core",
+    "answer",
+    "handler"
+  ],
+  "author": "Lorenzo García Rivera",
+  "license": "CC-BY-SA-4.0",
+  "bugs": {
+    "url": "https://github.com/iaigz/core-answer/issues"
+  },
+  "homepage": "https://github.com/iaigz/core-answer#readme",
+  "dependencies": {
+    "@iaigz/core-log": "file:../core-log"
+  }
+}
