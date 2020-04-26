@@ -16,14 +16,10 @@ const constructor = module.exports = function ApiAnswer (opts) {
 
   parent.call(this, opts)
 
-  Object.defineProperties(this, {
-    GET: { get: () => opts.GET || null, enumerable: true },
-    PUT: { get: () => opts.PUT || null, enumerable: true },
-    HEAD: { get: () => opts.HEAD || null, enumerable: true },
-    POST: { get: () => opts.POST || null, enumerable: true },
-    PATCH: { get: () => opts.PATCH || null, enumerable: true },
-    DELETE: { get: () => opts.DELETE || null, enumerable: true }
-  })
+  METHODS.forEach(method => Object.defineProperty(this, method, {
+    get: () => opts[method] || null,
+    enumerable: true
+  }))
 
   return this
 }
@@ -31,22 +27,29 @@ const constructor = module.exports = function ApiAnswer (opts) {
 const prototype = constructor.prototype = Object.create(parent.prototype)
 prototype.constructor = constructor
 
+prototype.toString = function () {
+  return `[${this.constructor.name} ` +
+  METHODS.filter(m => typeof this[m] === 'function').join('/') +
+  ` ${this.pattern}]`
+}
+
 prototype.accepts = function (request) {
   return parent.prototype.accepts.call(this, request) &&
     typeof this[request.method] === 'function'
 }
 
 prototype.forbid = function (request, response) {
-  if (typeof this[request.method] === 'function') {
-    return parent.prototype.forbid(request, response)
+  if (parent.prototype.accepts.call(this, request)) {
+    // 405 status code is client error: Method Not Allowed
+    response.writeHead(405, {
+      Allow: METHODS.filter(m => typeof this[m] === 'function').join(', '),
+      Connection: 'close',
+      'Content-Type': 'text/plain'
+    })
+    response.end(STATUS_CODES[405])
+  } else {
+    return parent.prototype.forbid.call(this, request, response, 500)
   }
-  // 405 status code is client error: Method Not Allowed
-  response.writeHead(405, {
-    Allow: METHODS.filter(m => typeof this[m] === 'function').join(', '),
-    Connection: 'close',
-    'Content-Type': 'text/plain'
-  })
-  response.end(STATUS_CODES[405])
 }
 
 prototype._handle = function (request, response) {

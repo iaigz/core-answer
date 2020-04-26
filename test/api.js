@@ -7,7 +7,7 @@ process.on('exit', code => { console.log('CODE', code) })
 let Answer = null
 
 try {
-  Answer = require('..')
+  Answer = require('../ApiAnswer')
   console.log('PASS module can be required without errors')
 } catch (err) {
   console.error(err.stack)
@@ -29,10 +29,12 @@ try {
 }
 
 [
-  function handler (request, response) {},
+  function gethandler (request, response) {},
   '/some/string/as/pattern',
   /^(.*|some-regexp)/,
-  {}
+  { GET (req, res) {} },
+  { GET (req, res) {}, POST (req, res) {} },
+  { GET (req, res) {}, POST (req, res) {}, DELETE (req, res) {} }
 ].forEach(value => {
   try {
     answer = new Answer(value)
@@ -49,7 +51,6 @@ try {
     process.exit(1)
   }
   try {
-    // don't test for answer.pattern, it's a kind of internal usage property
     assert.strictEqual(typeof answer.accepts, 'function', 'missing accepts()')
     assert.strictEqual(typeof answer.handler, 'function', 'missing handler()')
     assert.strictEqual(typeof answer.handle, 'function', 'missing accepts()')

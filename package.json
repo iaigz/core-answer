@@ -8,7 +8,7 @@
     "ApiAnswer.js"
   ],
   "scripts": {
-    "test": "node test/answer.js && standard --fix"
+    "test": "./script/test"
   },
   "repository": {
     "type": "git",
@@ -27,6 +27,6 @@
   },
   "homepage": "https://github.com/iaigz/core-answer#readme",
   "dependencies": {
-    "@iaigz/core-log": "file:../core-log"
+    "@iaigz/core-log": "git://github.com/iaigz/core-log.git"
   }
 }
