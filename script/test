@@ -5,6 +5,7 @@ cd "$(iai repo)" || exit
 node test/answer.js || exit
 node test/answer-request.js || exit
 node test/answer-pattern.js || exit
+node test/answer-returns.js || exit
 
 node test/api.js || exit
 node test/api-methods.js || exit

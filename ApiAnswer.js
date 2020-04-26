@@ -5,7 +5,7 @@ const log = new Log()
 
 log.level = log.INFO
 
-const { METHODS, STATUS_CODES } = require('http')
+const { METHODS } = require('http')
 
 // ApiAnswer pseudo-class
 const parent = require('./Answer')
@@ -16,10 +16,12 @@ const constructor = module.exports = function ApiAnswer (opts) {
 
   parent.call(this, opts)
 
-  METHODS.forEach(method => Object.defineProperty(this, method, {
-    get: () => opts[method] || null,
-    enumerable: true
-  }))
+  METHODS
+    .filter(method => typeof opts[method] === 'function')
+    .forEach(method => Object.defineProperty(this, method, {
+      value: opts[method],
+      enumerable: true
+    }))
 
   return this
 }
@@ -33,23 +35,18 @@ prototype.toString = function () {
   ` ${this.pattern}]`
 }
 
-prototype.accepts = function (request) {
-  return parent.prototype.accepts.call(this, request) &&
-    typeof this[request.method] === 'function'
+prototype.isAllowable = function (request) {
+  return typeof this[request.method] === 'function'
 }
 
-prototype.forbid = function (request, response) {
-  if (parent.prototype.accepts.call(this, request)) {
-    // 405 status code is client error: Method Not Allowed
-    response.writeHead(405, {
-      Allow: METHODS.filter(m => typeof this[m] === 'function').join(', '),
-      Connection: 'close',
-      'Content-Type': 'text/plain'
-    })
-    response.end(STATUS_CODES[405])
-  } else {
-    return parent.prototype.forbid.call(this, request, response, 500)
+prototype.forbid = function (request, response, code) {
+  // 405 is "Method Not Allowed"
+  if (code === 405) {
+    response.setHeader('Allow',
+      METHODS.filter(m => typeof this[m] === 'function').join(', ')
+    )
   }
+  return parent.prototype.forbid.call(this, request, response, code)
 }
 
 prototype._handle = function (request, response) {

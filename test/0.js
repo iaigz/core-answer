@@ -28,6 +28,7 @@ exports.initialize = (filename) => new Promise((resolve, reject) => {
       console.log(`INFO ${filename} test server has closed`)
     })
     .listen(SRV_PORT)
+  return server
 })
 
 exports.catcher = (error) => {
@@ -72,17 +73,13 @@ exports.listener = (listen, ...request) => new Promise((resolve, reject) => {
   return server
 })
 
-exports.sequence = (iterable, fn) => new Promise((resolve, reject) => {
-  iterable = iterable.slice(0)
-})
-
 exports.request = (url = '', opts = {}) => new Promise((resolve, reject) => {
   if (typeof url !== 'string') {
     opts = url
     url = ''
   }
   console.log('INFO request %j %s', opts, `http://${SRV_HOST}${url}`)
-  http.request(`http://${SRV_HOST}${url}`, {
+  const request = http.request(`http://${SRV_HOST}${url}`, {
     port: SRV_PORT,
     ...opts
   })
@@ -91,10 +88,55 @@ exports.request = (url = '', opts = {}) => new Promise((resolve, reject) => {
       let data = ''
       response
         .on('data', (chunk) => { data += chunk })
-        .on('end', () => resolve({ response: response, data: data }))
+        .on('end', () => resolve({
+          response: response, data: data, request: request
+        }))
     })
     .end() // actually, end() request is "send request"
 })
+
+exports.multiplex = (answer, expect = null, requests = [], result = null) => {
+  return (server) => {
+    const original = requests.length
+    requests = requests.slice(0)
+    result = result || (result => result)
+    return new Promise((resolve, reject) => {
+      const _listen = (req, res) => {
+        res.on('finish', () => {
+          const actual = original - requests.length
+          try {
+            expect(req, res)
+            console.log('PASS fulfills expect() for request', actual)
+          } catch (err) {
+            console.log('FAIL should fulfill expect() for request', actual)
+            return reject(err)
+          }
+        })
+        answer(req, res)
+      }
+      const _next = () => {
+        if (!requests.length) {
+          server.removeListener('request', _listen)
+          return resolve(server)
+        }
+        exports
+          .request(...requests.shift())
+          .then(data => {
+            try {
+              result(data.response, data.data, data.request)
+            } catch (err) {
+              return reject(err)
+            }
+            _next()
+          })
+      }
+      server.on('request', _listen)
+      console.log('INFO will sequence %s requests', requests.length)
+      _next()
+      return server
+    })
+  }
+}
 
 /* vim: set expandtab: */
 /* vim: set filetype=javascript ts=2 shiftwidth=2: */

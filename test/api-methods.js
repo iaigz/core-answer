@@ -21,6 +21,11 @@ function methodsTest (answer, expect = {}, methods = [], url = '/') {
             assert.strictEqual(res.statusCode, status)
             console.log(`PASS answer uses status code ${status}`)
           } catch (err) {
+            console.error(
+              'allowable?', answer.isAllowable(req),
+              'acceptable?', answer.isAcceptable(req),
+              'pattern?', answer.pattern.test(req.url)
+            )
             console.log(`FAIL answer should use status ${status}`)
             return reject(err)
           }
@@ -36,6 +41,10 @@ function methodsTest (answer, expect = {}, methods = [], url = '/') {
           assert.strictEqual(answer.accepts(req), accept)
           console.log(`PASS answer does ${acc} ${req.method} ${req.url}`)
         } catch (err) {
+          console.error(
+            'allowable?', answer.isAllowable(req),
+            'acceptable?', answer.isAcceptable(req)
+          )
           console.log(`FAIL answer should ${acc} ${req.method} ${req.url}`)
           reject(err)
         }
