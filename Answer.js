@@ -81,7 +81,15 @@ constructor.prototype = {
     return request.method === 'GET'
   },
   isAcceptable: function (request) {
-    return this.returns === null || this.returns === request.headers.accept
+    if (this.returns === null) return true
+    const types = request.headers.accept
+      .split(',')
+      .map(val => {
+        const parts = val.trim().split(';')
+        return { mime: parts.shift(), param: parts }
+        // TODO could use quality parameter to sort out types
+      })
+    return types.some(t => t.mime === this.returns)
   },
   // There isn't next function: answers aren't connect-like middleware
   handle: function (request, response) {

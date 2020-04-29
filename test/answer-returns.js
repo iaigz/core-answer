@@ -95,6 +95,16 @@ const test = tester
     { accept: true, status: 200, mimetype: 'text/plain' },
     ['text/plain']
   ))
+  // tipical accept header sent by firefox
+  .then(returnsTest(
+    new ApiAnswer({ returns: 'text/html', GET: answerOk }),
+    { accept: true, status: 200, mimetype: 'text/html' },
+    [
+      'text/html',
+      // firefox
+      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    ]
+  ))
   // same with application/json
   .then(returnsTest(
     new Answer({ returns: 'application/json', handler: answerOkJSON }),
@@ -110,7 +120,11 @@ const test = tester
   .then(returnsTest(
     new Answer({ handler: answerOk }),
     { accept: true, status: 200 },
-    ['text/plain', 'text/html', 'application/json']
+    [
+      'text/plain', 'text/html', 'application/json',
+      // firefox:
+      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    ]
   ))
   .then(returnsTest(
     new ApiAnswer({ GET: answerOk }),
