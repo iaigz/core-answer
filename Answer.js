@@ -78,7 +78,9 @@ constructor.prototype = {
     return false
   },
   isAllowable: function (request) {
-    return request.method === 'GET'
+    // default Answer implementation allows all methods
+    return true
+    // return request.method === 'GET'
   },
   isAcceptable: function (request) {
     if (this.returns === null) return true
@@ -122,6 +124,10 @@ constructor.prototype = {
     // Code 500 is "Internal Server Error"
     return this.forbid(request, response, 500)
   },
+  _handle: function (request, response) {
+    // for future-proof, don't implement OK or client-error here
+    return this.forbid(request, response)
+  },
   // forbid is 'what todo when request should not be handled'
   // default code is 501 - "Not implemented"
   forbid: function (request, response, code = 501) {
@@ -144,9 +150,9 @@ constructor.prototype = {
         break
     }
   },
-  _handle: function (request, response) {
-    // for future-proof, don't implement OK or client-error here
-    return this.forbid(request, response)
+  redirect: function (response, location) {
+    response.writeHead(302, { Location: location })
+    response.end()
   }
 }
 

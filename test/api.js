@@ -54,6 +54,7 @@ try {
     assert.strictEqual(typeof answer.accepts, 'function', 'missing accepts()')
     assert.strictEqual(typeof answer.handler, 'function', 'missing handler()')
     assert.strictEqual(typeof answer.handle, 'function', 'missing accepts()')
+    assert.strictEqual(typeof answer.redirect, 'function', 'missing redirect()')
   } catch (err) {
     console.error(err.stack)
     console.log('FAIL Answer interface is not meet for', value)
