@@ -78,12 +78,12 @@ constructor.prototype = {
     return false
   },
   isAllowable: function (request) {
-    // default Answer implementation allows all methods
+    // base Answer does't care about request methods
     return true
-    // return request.method === 'GET'
   },
   isAcceptable: function (request) {
     if (this.returns === null) return true
+    if (!request.headers.accept) return false
     const types = request.headers.accept
       .split(',')
       .map(val => {

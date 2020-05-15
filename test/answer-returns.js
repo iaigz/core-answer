@@ -13,10 +13,16 @@ const answerOkJSON = (req, res) => {
   res.end(JSON.stringify('OK'))
 }
 
+// tipical Accept header sent by firefox
+const FIREFOX = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+
 function returnsTest (answer, expect = {}, types = []) {
   const { accept, status, mimetype } = expect
   const accText = accept ? 'accept' : 'not accept'
-  const requests = types.map(type => ['/', { headers: { accept: type } }])
+  const requests = types.map(type => {
+    // falsy type value means "dont include an accept header"
+    return type ? ['/', { headers: { accept: type } }] : ['/']
+  })
   return tester.multiplex(
     answer.handler,
     (req, res) => {
@@ -95,15 +101,11 @@ const test = tester
     { accept: true, status: 200, mimetype: 'text/plain' },
     ['text/plain']
   ))
-  // tipical accept header sent by firefox
+  // both simple and complex Accept header values, as sent by firefox
   .then(returnsTest(
     new ApiAnswer({ returns: 'text/html', GET: answerOk }),
     { accept: true, status: 200, mimetype: 'text/html' },
-    [
-      'text/html',
-      // firefox
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    ]
+    ['text/html', FIREFOX]
   ))
   // same with application/json
   .then(returnsTest(
@@ -117,19 +119,16 @@ const test = tester
     ['application/json']
   ))
   // it should still work without using the feature at all
+  // even for requests with no accept header
   .then(returnsTest(
     new Answer({ handler: answerOk }),
     { accept: true, status: 200 },
-    [
-      'text/plain', 'text/html', 'application/json',
-      // firefox:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    ]
+    [null, 'text/plain', 'text/html', 'application/json', FIREFOX]
   ))
   .then(returnsTest(
     new ApiAnswer({ GET: answerOk }),
     { accept: true, status: 200 },
-    ['text/plain', 'text/html', 'application/json']
+    [null, 'text/plain', 'text/html', 'application/json', FIREFOX]
   ))
   // It is possible to create an Answer without providing a handler
   // when content-type is acceptable it should use not-implemented
@@ -142,16 +141,18 @@ const test = tester
   //
   // NEGATIVE ACCEPT CASES
   //
-  // 406 not acceptable should be used when not supporting Accept header mimetype
+  // 406 not acceptable should be used when:
+  // - not supporting Accept header mimetype
+  // - Accept header is not specified
   .then(returnsTest(
     new Answer({ returns: 'application/json', handler: answerOk }),
     { accept: false, status: 406, mimetype: 'application/json' },
-    ['text/plain', 'text/html']
+    [null, 'text/plain', 'text/html']
   ))
   .then(returnsTest(
     new ApiAnswer({ returns: 'application/json', GET: answerOk }),
     { accept: false, status: 406, mimetype: 'application/json' },
-    ['text/plain', 'text/html']
+    [null, 'text/plain', 'text/html']
   ))
   //
   // NEGATIVE ACCEPT CASES (NO HANDLER)
@@ -160,13 +161,13 @@ const test = tester
   .then(returnsTest(
     new Answer({ returns: 'application/json' }),
     { accept: false, status: 406, mimetype: 'application/json' },
-    ['text/plain', 'text/html']
+    [null, 'text/plain', 'text/html']
   ))
   // Api answers should treat as "method not allowed"
   .then(returnsTest(
     new ApiAnswer({ returns: 'application/json' }),
     { accept: false, status: 405, mimetype: 'application/json' },
-    ['application/json', 'text/plain', 'text/html']
+    [null, 'application/json', 'text/plain', 'text/html']
   ))
 
 test
