@@ -50,9 +50,19 @@ try {
   }
   try {
     // don't test for answer.pattern, it's a kind of internal usage property
-    assert.strictEqual(typeof answer.accepts, 'function', 'missing accepts()')
-    assert.strictEqual(typeof answer.handler, 'function', 'missing handler()')
-    assert.strictEqual(typeof answer.handle, 'function', 'missing accepts()')
+    const fnIface = [
+      'accepts', // determine whenever answer accepts request
+      // TODO 'handles', // determine whenever answer should handle request
+      'matches', // whenever answer accepts request.url
+      'isAllowable', // whenever answer handles request.method
+      'isAcceptable', // whenever answer returns headers.accept content-type
+      'handler', 'handle' // return a bound handle or handle request
+    ]
+    fnIface.forEach(method => {
+      assert.strictEqual(typeof answer[method], 'function',
+        `missing #${method}() function property`
+      )
+    })
   } catch (err) {
     console.error(err.stack)
     console.log('FAIL Answer interface is not meet for', value)

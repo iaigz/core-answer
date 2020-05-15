@@ -71,11 +71,13 @@ constructor.prototype = {
       log.warn('cannot accept a request without headers')
       return false
     }
-    if (this.isAllowable(request) && this.isAcceptable(request)) {
-      const url = this.parseUrl(request)
-      return this.pattern.test(url.pathname)
-    }
-    return false
+    return this.isAllowable(request) &&
+      this.isAcceptable(request) &&
+      this.matches(request)
+  },
+  matches: function (request) {
+    const url = this.parseUrl(request)
+    return this.pattern.test(url.pathname)
   },
   isAllowable: function (request) {
     // base Answer does't care about request methods
