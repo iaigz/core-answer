@@ -46,7 +46,9 @@ const constructor = module.exports = function Answer (opts) {
 constructor.prototype = {
   constructor: constructor,
   toString: function () {
-    return `[${this.constructor.name} ${this.pattern}]`
+    return this.returns
+      ? `[${this.constructor.name} ${this.pattern} => ${this.returns}]`
+      : `[${this.constructor.name} ${this.pattern}]`
   },
   parseUrl: function (request) {
     let origin = `http://${request.headers.host}`
@@ -93,7 +95,11 @@ constructor.prototype = {
         return { mime: parts.shift(), param: parts }
         // TODO could use quality parameter to sort out types
       })
-    return types.some(t => t.mime === this.returns)
+    if (typeof this.returns === 'string') {
+      return types.some(t => t.mime === this.returns)
+    } else {
+      return this.returns.some(value => types.some(t => t.mime === value))
+    }
   },
   // There isn't next function: answers aren't connect-like middleware
   handle: function (request, response) {

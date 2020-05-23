@@ -12,6 +12,12 @@ const answerOkJSON = (req, res) => {
   res.statusCode = 200
   res.end(JSON.stringify('OK'))
 }
+const answerOkBoth = (req, res) => {
+  switch (res.getHeader('content-type')) {
+    case 'application/json': return answerOkJSON(req, res)
+    default: return answerOk(req, res)
+  }
+}
 
 // tipical Accept header sent by firefox
 const FIREFOX = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
@@ -103,6 +109,11 @@ const test = tester
   ))
   // both simple and complex Accept header values, as sent by firefox
   .then(returnsTest(
+    new Answer({ returns: 'text/html', handler: answerOk }),
+    { accept: true, status: 200, mimetype: 'text/html' },
+    ['text/html', FIREFOX]
+  ))
+  .then(returnsTest(
     new ApiAnswer({ returns: 'text/html', GET: answerOk }),
     { accept: true, status: 200, mimetype: 'text/html' },
     ['text/html', FIREFOX]
@@ -138,6 +149,16 @@ const test = tester
     ['application/json']
   ))
   // ApiAnswer wouldn't accept this, treating as method-not allowed
+  //
+  // it should be possible to specify an array of acceptable return types
+  .then(returnsTest(
+    new Answer({
+      returns: ['text/plain', 'application/json'], handler: answerOkBoth
+    }),
+    { accept: true, status: 200 },
+    ['text/plain', 'application/json']
+  ))
+
   //
   // NEGATIVE ACCEPT CASES
   //
