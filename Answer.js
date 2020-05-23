@@ -85,16 +85,19 @@ constructor.prototype = {
     // base Answer does't care about request methods
     return true
   },
-  isAcceptable: function (request) {
-    if (this.returns === null) return true
-    if (!request.headers.accept) return false
-    const types = request.headers.accept
+  parseAccept: function (header) {
+    return header
       .split(',')
       .map(val => {
         const parts = val.trim().split(';')
         return { mime: parts.shift(), param: parts }
         // TODO could use quality parameter to sort out types
       })
+  },
+  isAcceptable: function (request) {
+    if (this.returns === null) return true
+    if (!request.headers.accept) return false
+    const types = this.parseAccept(request.headers.accept)
     if (typeof this.returns === 'string') {
       return types.some(t => t.mime === this.returns)
     } else {
@@ -104,8 +107,15 @@ constructor.prototype = {
   // There isn't next function: answers aren't connect-like middleware
   handle: function (request, response) {
     if (this.accepts(request)) {
-      if (this.returns) {
-        response.setHeader('Content-Type', this.returns)
+      if (this.returns !== null) {
+        if (typeof this.returns === 'string') {
+          response.setHeader('Content-Type', this.returns)
+        } else {
+          const acceptable = this.parseAccept(request.headers.accept)
+          const returns = this.returns
+            .filter(value => acceptable.some(t => t.mime === value))
+          response.setHeader('Content-Type', returns.shift())
+        }
       }
       try {
         return this._handle(request, response)

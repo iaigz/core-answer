@@ -150,6 +150,8 @@ const test = tester
   ))
   // ApiAnswer wouldn't accept this, treating as method-not allowed
   //
+  // returns as Array
+  //
   // it should be possible to specify an array of acceptable return types
   .then(returnsTest(
     new Answer({
@@ -157,6 +159,21 @@ const test = tester
     }),
     { accept: true, status: 200 },
     ['text/plain', 'application/json']
+  ))
+  // it should setup an acceptable content-type header
+  .then(returnsTest(
+    new Answer({
+      returns: ['text/html', 'application/json'], handler: answerOkBoth
+    }),
+    { accept: true, status: 200, mimetype: 'text/html' },
+    ['text/html', FIREFOX]
+  ))
+  .then(returnsTest(
+    new Answer({
+      returns: ['text/html', 'application/json'], handler: answerOkBoth
+    }),
+    { accept: true, status: 200, mimetype: 'application/json' },
+    ['application/json']
   ))
 
   //
