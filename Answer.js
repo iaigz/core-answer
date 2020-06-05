@@ -1,4 +1,5 @@
 const assert = require('assert')
+const URL = require('url').URL
 const { STATUS_CODES } = require('http')
 
 const Log = require('@iaigz/core-log')
