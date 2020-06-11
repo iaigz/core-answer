@@ -107,17 +107,17 @@ constructor.prototype = {
   },
   // There isn't next function: answers aren't connect-like middleware
   handle: function (request, response) {
-    if (this.accepts(request)) {
-      if (this.returns !== null) {
-        if (typeof this.returns === 'string') {
-          response.setHeader('Content-Type', this.returns)
-        } else {
-          const acceptable = this.parseAccept(request.headers.accept)
-          const returns = this.returns
-            .filter(value => acceptable.some(t => t.mime === value))
-          response.setHeader('Content-Type', returns.shift())
-        }
+    if (this.returns !== null) {
+      if (typeof this.returns === 'string') {
+        response.setHeader('Content-Type', this.returns)
+      } else {
+        const acceptable = this.parseAccept(request.headers.accept)
+        const returns = this.returns
+          .filter(value => acceptable.some(t => t.mime === value))
+        response.setHeader('Content-Type', returns.shift())
       }
+    }
+    if (this.accepts(request)) {
       try {
         return this._handle(request, response)
       } catch (err) {
@@ -153,24 +153,21 @@ constructor.prototype = {
     assert.notStrictEqual(typeof STATUS_CODES[code], 'undefined')
     response.statusCode = code
     response.setHeader('Connection', 'close')
-    switch (this.returns) {
+
+    const content = response.getHeader('Content-Type')
+    switch (content) {
       case 'application/json':
-        response.setHeader('Content-type', this.returns)
         response.end(JSON.stringify(STATUS_CODES[code]))
         break
-      case null:
-        response.setHeader('Content-Type', 'text/plain')
-        response.end(STATUS_CODES[code])
-        break
       default:
-        log.warn('unsupported default %s response', this.returns)
-        response.setHeader('Content-type', this.returns)
+        log.warn('unsupported default %s response', content)
+        response.setHeader('Content-Type', 'text/plain')
         response.end()
         break
     }
   },
-  redirect: function (response, location) {
-    response.writeHead(302, { Location: location })
+  redirect: function (response, location, code = 302) {
+    response.writeHead(code, { Location: location })
     response.end()
   }
 }
