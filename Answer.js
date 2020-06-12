@@ -51,6 +51,7 @@ constructor.prototype = {
       ? `[${this.constructor.name} ${this.pattern} => ${this.returns}]`
       : `[${this.constructor.name} ${this.pattern}]`
   },
+  parseURL: function (...args) { return this.parseUrl(...args) },
   parseUrl: function (request) {
     let origin = `http://${request.headers.host}`
     if (request.socket.encrypted) {
@@ -151,10 +152,12 @@ constructor.prototype = {
   // default code is 501 - "Not implemented"
   forbid: function (request, response, code = 501) {
     assert.notStrictEqual(typeof STATUS_CODES[code], 'undefined')
+
     response.statusCode = code
     response.setHeader('Connection', 'close')
 
     const content = response.getHeader('Content-Type')
+
     switch (content) {
       case 'application/json':
         response.end(JSON.stringify(STATUS_CODES[code]))
@@ -167,8 +170,9 @@ constructor.prototype = {
     }
   },
   redirect: function (response, location, code = 302) {
-    response.writeHead(code, { Location: location })
-    response.end()
+    response
+      .writeHead(code, { Location: location, Connection: 'close' })
+      .end()
   }
 }
 
