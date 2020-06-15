@@ -29,12 +29,6 @@ const constructor = module.exports = function ApiAnswer (opts) {
 const prototype = constructor.prototype = Object.create(parent.prototype)
 prototype.constructor = constructor
 
-prototype.toString = function () {
-  return `[${this.constructor.name} ` +
-  METHODS.filter(m => typeof this[m] === 'function').join('/') +
-  ` ${this.pattern}]`
-}
-
 prototype.isAllowable = function (request) {
   return typeof this[request.method] === 'function'
 }

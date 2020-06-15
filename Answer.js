@@ -125,32 +125,35 @@ constructor.prototype = {
         const { method, url } = request
         log.error('%s %s throws an error', method, url)
         log.error(err.stack)
-      }
-    } else {
-      log.warn('asked to handle un-acceptable request')
-      if (!request.headers) {
-        // 400 is "Bad request"
-        return this.forbid(request, response, 400)
-      }
-      if (this.pattern.test(request.url)) {
-        if (!this.isAllowable(request)) {
-          return this.forbid(request, response, 405)
-        }
-        if (!this.isAcceptable(request)) {
-          return this.forbid(request, response, 406)
-        }
+        // Code 500 is "Internal Server Error"
+        return this.forbid(request, response, 500, err)
       }
     }
+    const error = new Error('asked to handle un-acceptable request')
     // Code 500 is "Internal Server Error"
-    return this.forbid(request, response, 500)
+    return this.forbid(request, response, 406, error)
+    /*
+    if (!request.headers) {
+      // 400 is "Bad request"
+      return this.forbid(request, response, 400)
+    }
+    if (this.pattern.test(request.url)) {
+      if (!this.isAllowable(request)) {
+        return this.forbid(request, response, 405)
+      }
+      if (!this.isAcceptable(request)) {
+        return this.forbid(request, response, 406)
+      }
+    }
+    */
   },
   _handle: function (request, response) {
     // for future-proof, don't implement OK or client-error here
-    return this.forbid(request, response)
+    return this.forbid(request, response, 501)
   },
   // forbid is 'what todo when request should not be handled'
   // default code is 501 - "Not implemented"
-  forbid: function (request, response, code = 501) {
+  forbid: function (request, response, code = 500, error = null) {
     assert.notStrictEqual(typeof STATUS_CODES[code], 'undefined')
 
     response.statusCode = code
@@ -160,12 +163,12 @@ constructor.prototype = {
 
     switch (content) {
       case 'application/json':
-        response.end(JSON.stringify(STATUS_CODES[code]))
+        response.end(JSON.stringify(error))
         break
       default:
         log.warn('unsupported default %s response', content)
         response.setHeader('Content-Type', 'text/plain')
-        response.end()
+        response.end(error)
         break
     }
   },
