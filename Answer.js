@@ -80,8 +80,10 @@ constructor.prototype = {
       this.matches(request)
   },
   matches: function (request) {
-    const url = this.parseUrl(request)
-    return this.pattern.test(url.pathname)
+    const path = Array.isArray(request.route)
+      ? request.route[request.route.length - 1]
+      : this.parseUrl(request).pathname
+    return this.pattern.test(path)
   },
   isAllowable: function (request) {
     // base Answer does't care about request methods
@@ -168,7 +170,7 @@ constructor.prototype = {
       default:
         log.warn('unsupported default %s response', content)
         response.setHeader('Content-Type', 'text/plain')
-        response.end(error)
+        response.end(error.message)
         break
     }
   },
