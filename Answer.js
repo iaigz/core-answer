@@ -101,11 +101,15 @@ constructor.prototype = {
   isAcceptable: function (request) {
     if (this.returns === null) return true
     if (!request.headers.accept) return false
-    const types = this.parseAccept(request.headers.accept)
+
+    const accepts = this.parseAccept(request.headers.accept)
+
+    if (accepts.some(type => type.mime === '*/*')) return true
+
     if (typeof this.returns === 'string') {
-      return types.some(t => t.mime === this.returns)
+      return accepts.some(type => type.mime === this.returns)
     } else {
-      return this.returns.some(value => types.some(t => t.mime === value))
+      return this.returns.some(value => accepts.some(t => t.mime === value))
     }
   },
   // There isn't next function: answers aren't connect-like middleware
@@ -117,7 +121,17 @@ constructor.prototype = {
         const acceptable = this.parseAccept(request.headers.accept)
         const returns = this.returns
           .filter(value => acceptable.some(t => t.mime === value))
-        response.setHeader('Content-Type', returns.shift())
+        if (returns.length) {
+          response.setHeader('Content-Type', returns.shift())
+        } else {
+          log.warn('Cannot determine response content-type', {
+            url: request.url,
+            this: `${this}`,
+            'this.returns': this.returns,
+            acceptable,
+            returns
+          })
+        }
       }
     }
     if (this.accepts(request)) {
