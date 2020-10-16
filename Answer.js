@@ -179,12 +179,12 @@ constructor.prototype = {
 
     switch (content) {
       case 'application/json':
-        response.end(JSON.stringify(error))
+        response.end(JSON.stringify(error || {}))
         break
       default:
         log.warn('unsupported default %s response', content)
         response.setHeader('Content-Type', 'text/plain')
-        response.end(error.message)
+        response.end(error ? error.message : STATUS_CODES[code])
         break
     }
   },
